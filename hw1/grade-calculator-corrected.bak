@@ -31,80 +31,25 @@ def letter_grade? (str): return linear_search(letter_grades, str)
 ###
 
 def integration_grade(project_score: int?) -> track_grade?:
-    if ((project_score > 6) or (project_score < 0)): error('score out of range')
-    if project_score == 6: return 'A'
-    if project_score >= 4: return 'B'
-    if project_score == 3: return 'C'
-    if project_score == 2: return 'D'
-    else: return 'F'
+    pass
+    #   ^ WRITE YOUR IMPLEMENTATION HERE
 
 test 'first integration_grade test; you will need to add more':
     assert integration_grade(0) == 'F'
-    assert integration_grade(1) == 'F'
-    assert integration_grade(2) == 'D'
-    assert integration_grade(3) == 'C'
-    assert integration_grade(4) == 'B'
-    assert integration_grade(5) == 'B'
-    assert integration_grade(6) == 'A'
-    
-test 'score out of range test':
-    assert_error integration_grade(7) 
-    assert_error integration_grade(-1)
-    
 
 def implementation_grade(homework_scores: VecC[int?]) -> track_grade?:
-    if (homework_scores.len() != 5): error('incorrect number of assignments')
-    let total_score = 0
-    for score in homework_scores:
-        if ((score > 4) or (score < 0)): error('score out of range')
-        total_score = total_score + score
-
-    if total_score == 20: return 'A'
-    if total_score >= 16: return 'B'
-    if total_score >= 12: return 'C'
-    if total_score >=10: return 'D'
-    else: return 'F'
-    
+    pass
+    #   ^ WRITE YOUR IMPLEMENTATION HERE
 
 test 'first implementation_grade test; you will need to add more':
     assert implementation_grade([0,0,0,0,0]) == 'F'
-    assert implementation_grade([4, 4, 2, 0, 0]) == 'D'
-    assert implementation_grade([4, 4, 4, 0, 0]) == 'C'
-    assert implementation_grade([4, 4, 4, 4, 0]) == 'B'
-    assert implementation_grade([4, 4, 4, 4, 4]) == 'A'
-
-test 'incorrect number of assignments test':
-    assert_error implementation_grade([0])
-
-test 'score out of range':
-    assert_error implementation_grade([-1, 0, 0, 0, 4])
-
-# helper
-def __exam_point(exam_score: num?) -> int?:
-    if ((exam_score > 1) or (exam_score < 0)): error('score out of range')
-    if exam_score >=.85: return 4
-    if exam_score >=.7: return 3
-    if exam_score >=.55: return 2
-    if exam_score >= .35: return 1
-    else: return 0
-
 
 def exams_theory_points(exam1_score: num?, exam2_score: num?) -> int?:
-    let exam1_points = __exam_point(exam1_score)
-    let exam2_points = __exam_point(exam2_score)
-    return exam1_points + exam2_points
-
-
+    pass
+    #   ^ WRITE YOUR IMPLEMENTATION HERE
 
 test 'first exams_theory_points test; you will need to add more':
-    assert exams_theory_points(0.95, 0.86) == 8
     assert exams_theory_points(0.65, 0.86) == 6
-    assert exams_theory_points(0.55, 0.55) == 4
-    assert exams_theory_points(0.35, 0) == 1
-    
-
-test 'exams score out of range':
-    assert_error exams_theory_points(1.1, .4)
 
 def theory_grade(theory_points: int?) -> track_grade?:
     if theory_points == 12: return 'A'
@@ -183,9 +128,8 @@ class Student:
     let exam_scores: VecKC[num?, num?]
 
     def __init__ (self, name, homeworks, project, worksheet_scores, exam_scores):
-        pass
       #   ^ WRITE YOUR IMPLEMENTATION HERE
-        
+
     def get_homework_grades(self) -> VecC[int?]:
         pass
         #   ^ WRITE YOUR IMPLEMENTATION HERE
