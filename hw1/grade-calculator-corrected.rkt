@@ -116,20 +116,29 @@ def theory_grade(theory_points: int?) -> track_grade?:
 def tally_design_points(assignments: VecC[AnyC],
                         expected_n_assignments: int?,
                         counts?: FunC[AnyC, bool?]) -> int?:
-    pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+    if assignments.len() != expected_n_assignments: error('incorrect number of assignments')
+    let tally = 0
+    for curr_assignment in assignments:
+        if counts?(curr_assignment): tally = tally + 1
+    return tally
 
+# helper
+def __design_score_check(score: num?) -> bool?:
+    if score >= 0.5: return True
+    else: return False
+    
 def self_evals_design_points(self_eval_scores: VecC[num?]) -> int?:
-    pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+    return tally_design_points(self_eval_scores, 5, __design_score_check)
 
 def mutation_testing_design_points(mutation_scores: VecC[num?]) -> int?:
-    pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+    return tally_design_points(mutation_scores, 4, __design_score_check)
+
+# helper
+def __design_bool_check(result: bool?) -> bool?:
+    return result
 
 def design_docs_design_points(design_docs_scores: VecC[bool?]) -> int?:
-    pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+    return tally_design_points(design_docs_scores, 3, __design_bool_check)
 
 test 'first mutation_testing_design_points test; you will need to add more':
     assert mutation_testing_design_points([0.3, 0.6, 0.8, 1.0]) == 3
