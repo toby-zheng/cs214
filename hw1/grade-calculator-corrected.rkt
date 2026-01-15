@@ -1,5 +1,12 @@
 #lang dssl2
-
+let eight_principles = ["Know your rights.",
+"Acknowledge your sources.",
+"Protect your work.",
+"Avoid suspicion.",
+"Do your own work.",
+"Never falsify a record or permit another person to do so.",
+"Never fabricate data, citations, or experimental results.",
+"Always tell the truth when discussing your work with your instructor."]
 # HW1: Grade Calculator
 
 ###
@@ -105,6 +112,7 @@ test 'first exams_theory_points test; you will need to add more':
 
 test 'exams score out of range':
     assert_error exams_theory_points(1.1, .4)
+    assert_error exams_theory_points(-0.5, .4)
 
 def theory_grade(theory_points: int?) -> track_grade?:
     if theory_points == 12: return 'A'
@@ -112,6 +120,13 @@ def theory_grade(theory_points: int?) -> track_grade?:
     if theory_points >= 8:  return 'C'
     if theory_points >= 7:  return 'D'
     else:                   return 'F'
+    
+test 'theory_grade':
+    assert theory_grade(6) == 'F'
+    assert theory_grade(7) == 'D'
+    assert theory_grade(8) == 'C'
+    assert theory_grade(10) == 'B'
+    assert theory_grade(12) == 'A'
 
 def tally_design_points(assignments: VecC[AnyC],
                         expected_n_assignments: int?,
@@ -130,9 +145,23 @@ def __design_score_check(score: num?) -> bool?:
 def self_evals_design_points(self_eval_scores: VecC[num?]) -> int?:
     return tally_design_points(self_eval_scores, 5, __design_score_check)
 
+test 'self_eval test':
+    assert self_evals_design_points([1, 1, 0, 1, 1]) == 4
+
+test 'self_eval error test':
+    assert_error self_evals_design_points([1, 0, 1, 1])
+
 def mutation_testing_design_points(mutation_scores: VecC[num?]) -> int?:
     return tally_design_points(mutation_scores, 4, __design_score_check)
 
+test 'first mutation_testing_design_points test; you will need to add more':
+    assert mutation_testing_design_points([0.3, 0.6, 0.8, 1.0]) == 3
+    assert mutation_testing_design_points([0.3, 0.1, 0.1, 0.4]) == 0
+    assert mutation_testing_design_points([0.5, 0.5, 0.5, 0.5]) == 4
+
+test 'mutation_testing error test':
+    assert_error mutation_testing_design_points([1])
+    
 # helper
 def __design_bool_check(result: bool?) -> bool?:
     return result
@@ -140,8 +169,12 @@ def __design_bool_check(result: bool?) -> bool?:
 def design_docs_design_points(design_docs_scores: VecC[bool?]) -> int?:
     return tally_design_points(design_docs_scores, 3, __design_bool_check)
 
-test 'first mutation_testing_design_points test; you will need to add more':
-    assert mutation_testing_design_points([0.3, 0.6, 0.8, 1.0]) == 3
+test 'design_docs test':
+    assert design_docs_design_points([True, False, False]) == 1
+    assert design_docs_design_points([True, True, True]) == 3
+
+test 'design_docs error test':
+    assert_error design_docs_design_points([True])
 
 def design_grade(design_points: int?) -> track_grade?:
     if design_points >= 11: return 'A'
@@ -149,6 +182,13 @@ def design_grade(design_points: int?) -> track_grade?:
     if design_points >= 8:  return 'C'
     if design_points >= 7:  return 'D'
     else:                   return 'F'
+    
+test 'design_grade test':
+    assert design_grade(6) == 'F'
+    assert design_grade(7) == 'D'
+    assert design_grade(8) == 'C'
+    assert design_grade(9) == 'B'
+    assert design_grade(11) == 'A'
 
 ###
 ### Final Grades
@@ -168,17 +208,53 @@ def grade_lt (g1: letter_grade?, g2: letter_grade?) -> bool?:
 let TracksC = VecKC[track_grade?, track_grade?, track_grade?, track_grade?]
 
 def base_grade (tracks: TracksC) -> letter_grade?:
-    pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+    let lowest_grade = tracks[0]
+    for grade in tracks:
+        if grade_lt(grade, lowest_grade): lowest_grade = grade
+        
+    return lowest_grade
 
+test 'base_grade test':
+    assert base_grade(['A', 'A', 'B', 'C']) == 'C'
+    assert base_grade(['A', 'A', 'A', 'A']) == 'A'
+    assert base_grade(['A', 'A', 'C', 'C']) == 'C'
+    assert_error base_grade(['A'])
+    
 def n_above_expectations (tracks: TracksC) -> int?:
-    pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+    let base = base_grade(tracks)
+    let n = 0
+    for grade in tracks:
+        if grade_lt(base, grade): n = n + 1
+    return n
+
+test 'n_above_expectations test':
+    assert n_above_expectations(['A', 'A', 'B', 'C']) == 3
+    assert n_above_expectations(['A', 'A', 'A', 'A']) == 0
+    assert n_above_expectations(['A', 'A', 'C', 'C']) == 2
 
 def final_grade (base_grade: track_grade?,
                  n_above_expectations: int?) -> letter_grade?:
-    pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+    if base_grade == 'F': return 'F'
+    if base_grade == 'A': return 'A'
+    
+    let base_index = index_of(base_grade, letter_grades)
+    let final_index = base_index + n_above_expectations
+    
+    let result = letter_grades[final_index]
+    if result == 'D+': return 'D'
+    
+    return result
+    
+test 'final_grade test':
+    assert final_grade('C', 2) == 'B-'
+    assert final_grade('C', 0) == 'C'
+    
+test 'final_grade special cases':
+    assert final_grade('D', 1) == 'D'
+    assert final_grade('F', 3) == 'F'
+    assert final_grade('B', 3) == 'A'
+    assert final_grade('A', 3) == 'A'
+
 
 ###
 ### Students
@@ -192,24 +268,26 @@ class Student:
     let exam_scores: VecKC[num?, num?]
 
     def __init__ (self, name, homeworks, project, worksheet_scores, exam_scores):
-        pass
-      #   ^ WRITE YOUR IMPLEMENTATION HERE
+        self.name = name
+        self.homeworks = homeworks
+        self.project = project
+        self.worksheet_scores = worksheet_scores
+        self.exam_scores = exam_scores
         
     def get_homework_grades(self) -> VecC[int?]:
-        pass
-        #   ^ WRITE YOUR IMPLEMENTATION HERE
+        return [hw.n_passed_test_suites for hw in self.homeworks]
 
     def get_project_grade(self) -> int?:
-        pass
-        #   ^ WRITE YOUR IMPLEMENTATION HERE
+        return self.project.n_passed_test_suites
 
     def resubmit_homework (self, n: int?, new_grade: int?) -> NoneC:
-        pass
-        #   ^ WRITE YOUR IMPLEMENTATION HERE
+        if n < 1 or n > 5: error('no such homework')
+        let index = n-1
+        if new_grade > self.homeworks[index].n_passed_test_suites: self.homeworks[index].n_passed_test_suites = new_grade
 
     def resubmit_project (self, new_grade: int?) -> NoneC:
-        pass
-        #   ^ WRITE YOUR IMPLEMENTATION HERE
+        if new_grade > self.project.n_passed_test_suites: self.project.n_passed_test_suites = new_grade
+        
 
     # Determine a student's final letter grade from their body of work in the
     # class (i.e., the fields) using the helper functions you wrote earlier.
@@ -265,3 +343,83 @@ test 'Student#letter_grade, best case scenario':
                     [1.0, 1.0, 1.0, 1.0],
                     [1.0, 1.0])
     assert s.letter_grade() == 'A'
+
+test 'Student#letter_grade, B+':
+    let s = Student("B_student",
+                    [homework(4, 1.0, None),
+                     homework(4, 1.0, 1.0),
+                     homework(4, 1.0, 1.0),
+                     homework(4, 1.0, 1.0),
+                     homework(3, 1.0, 1.0)],
+                     project(5, [True, True, True]),
+                     [1.0, 1.0, 1.0, 1.0],
+                     [.80, 1.0])
+    assert s.letter_grade() == 'B+'
+
+test 'Student#letter_grade edge case':
+    let s = Student("edge",
+        [homework(2,0.5,None),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5)],
+        project(3,[True,False,False]),
+        [1.0,0.0,1.0,0.0],
+        [0.7,0.7])
+    assert s.letter_grade() == 'C'
+           
+test 'get_homework_grades test':
+    let s = Student("edge",
+        [homework(2,0.5,None),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5)],
+        project(3,[True,False,False]),
+        [1.0,0.0,1.0,0.0],
+        [0.7,0.7])
+    assert s.get_homework_grades() == [2,2,2,2,2]
+    
+test 'get_project_grade test':
+   let s = Student("edge",
+        [homework(2,0.5,None),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5),
+         homework(2,0.5,0.5)],
+        project(3,[True,False,False]),
+        [1.0,0.0,1.0,0.0],
+        [0.7,0.7])
+   assert s.get_project_grade() == 3
+    
+test 'resubmit_homework test':
+    let s = Student('resub',
+        [homework(1,1.0,None),
+         homework(1,1.0,None),
+         homework(1,1.0,None),
+         homework(1,1.0,None),
+         homework(1,1.0,None)],
+        project(3,[True,True,True]),
+        [1.0,1.0,1.0,1.0],
+        [0.8,0.8])
+
+    s.resubmit_homework(1, 3)
+    assert s.get_homework_grades()[0] == 3
+    s.resubmit_homework(1,2)
+    assert s.get_homework_grades()[0] == 3
+
+test 'resubmit_project test':
+    let s = Student('resub',
+        [homework(1,1.0,None),
+         homework(1,1.0,None),
+         homework(1,1.0,None),
+         homework(1,1.0,None),
+         homework(1,1.0,None)],
+        project(1,[True,True,True]),
+        [1.0,1.0,1.0,1.0],
+        [0.8,0.8])
+
+    s.resubmit_project(3)
+    assert s.get_project_grade() == 3
+    s.resubmit_project(2)
+    assert s.get_project_grade() == 3
