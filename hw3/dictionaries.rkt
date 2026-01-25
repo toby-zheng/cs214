@@ -27,17 +27,76 @@ interface DICT[K, V]:
 class AssociationList[K, V] (DICT):
 
     let _head
+    let _size
     #   ^ ADDITIONAL FIELDS HERE
 
     def __init__(self):
-        pass
-    #   ^ WRITE YOUR IMPLEMENTATION HERE
+        self._head = None
+        self._size = 0
 
     # See above.
     def __print__(self, print):
         print("#<object:AssociationList head=%p>", self._head)
 
     # Other methods you may need can go here.
+    def len(self) -> nat?:
+        # len must be O(1), save length value instead of traversal
+        return self._size
+        
+    def mem?(self, key: K) -> bool?:
+        let node = self._head
+        while (node != None):
+            if node[0] == key:
+                return True
+            node = node[2]
+        return False
+    
+    def get(self, key: K) -> V:
+        let node = self._head
+        while (node != None):
+            if node[0] == key: 
+                return node[1]
+            node = node[2]
+        error('key not found')
+        
+        
+    def put(self, key: K, value: V) -> NoneC:
+        let node = self._head
+        while (node != None):
+            if node[0] == key:
+                node[1] = value
+                return None
+            node = node[2]
+         
+        # new node
+        self._head = [key, value, self._head]
+        self._size = self._size + 1
+        return None
+            
+    
+    def del(self, key: K) -> NoneC:
+        let node = self._head
+        let last_node = None
+        
+        while (node != None):
+            if node[0] == key:
+                
+                # head
+                if last_node == None:
+                    self._head = node[2]  
+                #other nodes
+                else:
+                    let next = node[2]
+                    last_node[2] = next
+                
+                # length update
+                self._size = self._size -1
+                return None    
+                
+            last_node = node    
+            node = node[2]
+            
+        return None
 
 
 test 'yOu nEeD MorE tEsTs':
@@ -46,9 +105,72 @@ test 'yOu nEeD MorE tEsTs':
     a.put('hello', 5)
     assert a.len() == 1
     assert a.mem?('hello')
-    assert a.get('hello') == 5
+    assert a.get('hello') == 5  
 
+test 'length of empty dict':
+    let d = AssociationList()
+    assert d.len() == 0
 
+test 'empty dict get':
+    let d = AssociationList()
+    assert_error d.get('Hi')
+
+test 'delete key-value pair length 1':
+    let d = AssociationList()
+    d.put('hi', 'world')
+    assert d.len() == 1
+    d.del('hi')
+    assert d.len() == 0
+    assert_error d.get('hi')
+    
+test 'delete head':
+    let d = AssociationList()
+    d.put('lala', 'dida')
+    d.put('hi', 'world')
+    assert d.len() == 2
+    d.del('hi')
+    assert d.len() == 1
+    assert_error d.get('hi')
+    assert d.mem?('hi') == False
+    assert d.get('lala') == 'dida'
+    
+test 'delete non-head key-value':
+    let d = AssociationList()
+    d.put('hey', 'everybody')
+    d.put('lala', 'dida')
+    d.put('hi', 'world')
+    assert d.len() == 3
+    d.del('lala')
+    assert d.len() == 2
+    assert_error d.get('lala')
+    assert d.mem?('lala') == False
+    assert d.get('hi') == 'world'
+    assert d.get('hey') == 'everybody'
+    
+test 'update key':
+    let d = AssociationList()
+    d.put('lala', 'dida')
+    assert d.get('lala') == 'dida'
+    d.put('lala', 'deedee')
+    assert d.len() == 1
+    assert d.get('lala') == 'deedee'
+    
+test 'delete missing key':
+    let d = AssociationList()
+    d.put('hi', 'world')
+    d.del('hello')
+    assert d.len() == 1
+    assert d.get('hi') == 'world'
+    
+test 'multiple deletes':
+    let d = AssociationList()
+    d.put('hi', 1)
+    d.del('hi')
+    assert d.len() == 0
+    d.del('hi')
+    assert d.len() == 0
+    
+    
 class HashTable[K, V] (DICT):
     let _hash
     let _size
@@ -66,6 +188,20 @@ class HashTable[K, V] (DICT):
               self._size, self._data)
 
     # Other methods you may need can go here.
+    def len(self):
+        pass
+        
+    def mem?(self, key: K) -> bool?:
+        pass
+        
+    def get(self, key: K) -> V:
+        pass
+        
+    def put(self, key:K, value: V) -> NoneC:
+        pass
+        
+    def del(self, key: K) -> NoneC:
+        pass
 
 
 # first_char_hasher(String) -> Natural
