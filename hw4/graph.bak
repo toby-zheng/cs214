@@ -56,86 +56,11 @@ interface WUGRAPH:
     def get_all_edges(self) -> WEdgeList?
 
 class WUGraph (WUGRAPH):
-    let num_vert
-    let num_edges
-    let adjacency_matrix
-    
     #   ^ ADD YOUR FIELDS HERE
 
     def __init__(self, n_vert: nat?):
-        self.num_vert = n_vert
-        self.num_edges = 0
-        
-        # self.adjancency_matrix = vec(self.num_vert)
-        # for i in range(self.num_vert):
-            # self.adjacency_matrix[i] = vec(self.num_vert)
-        
-        # lambda function implementation
-        self.adjacency_matrix = vec(self.num_vert, lambda i : vec(self.num_vert))
+        pass
     #   ^ WRITE YOUR IMPLEMENTATION HERE
-        
-        
-    def n_vertices(self) -> nat?:
-        return self.num_vert
-    
-    def n_edges(self) -> nat?:
-        return self.num_edges
-    
-    def _out_of_bounds(self, v: Vertex?) -> bool?:
-        if ((v < 0) or (v >= self.num_vert)):
-            return True
-        else:
-            return False
-        
-    def set_edge(self, u: Vertex?, v: Vertex?, w: OptWeight?):
-        if (self._out_of_bounds(u) or self._out_of_bounds(v)):
-            error('out of bounds')
-        
-        
-        if w is None:
-            # weight none, remove existing edge
-            if self.adjacency_matrix[u][v] != None:
-                # symmetry
-                self.adjacency_matrix[u][v] = None
-                self.adjacency_matrix[v][u] = None
-                self.num_edges = self.num_edges - 1
-        else:
-            # weight exists, check if edge alr exists, update edge
-            if self.adjacency_matrix[u][v] == None:
-                self.num_edges = self.num_edges + 1
-                
-            self.adjacency_matrix[u][v] = w
-            self.adjacency_matrix[v][u] = w
-            
-        
-    def get_edge(self, u: Vertex?, v: Vertex?) -> OptWeight?:
-        if (self._out_of_bounds(u) or self._out_of_bounds(v)): 
-            error('out of bounds')   
-        return self.adjacency_matrix[u][v]
-         
-        
-    def get_adjacent(self, v: Vertex?) -> VertexList?:
-        # needs to error on out of bound v o/w accesses wrong
-        if (self._out_of_bounds(v)): 
-            error('out of bounds')
-            
-        let result = None
-        for i in range(self.num_vert):
-            if self.adjacency_matrix[i][v] != None:
-                # linked list of vertices
-                result = cons(i, result)
-        return result
-        
-        
-    def get_all_edges(self) -> WEdgeList?:
-        let result = None
-        for i in range(self.num_vert):
-            # avoid double counting w/ dynamic inner-loop range
-            for j in range(i, self.num_vert):
-                if self.adjacency_matrix[i][j] != None:
-                    result = cons(WEdge(i, j, self.adjacency_matrix[i][j]), result)
-        return result
-            
 
 # Other methods you may need can go here.
 
