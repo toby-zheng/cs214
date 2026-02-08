@@ -139,11 +139,7 @@ class WUGraph (WUGRAPH):
 
 # Other methods you may need can go here.
 
-test 'nowhere near enough':
-    let g = WUGraph(2)
-    g.set_edge(0,1,1)
-    assert g.get_edge(0,1) == 1
-
+    
 ###
 ### List helpers
 ###
@@ -169,6 +165,93 @@ def normalize_edges(lst: Cons.list?) -> Cons.list?:
     lst = Cons.map(normalize_edge, lst)
     return Cons.sort[WEdge?](edge_lt?, lst)
 
+    
+test 'nowhere near enough':
+    let g = WUGraph(2)
+    g.set_edge(0,1,1)
+    assert g.get_edge(0,1) == 1
+
+test 'empty':
+    let g = WUGraph(5)
+    assert g.n_vertices() == 5
+    assert g.n_edges() == 0
+    
+    for i in range(5):
+        assert g.get_adjacent(i) == None
+        
+test 'out of bounds':
+    let g = WUGraph(2)
+
+    assert_error g.get_edge(-1, 0)
+    assert_error g.get_edge(0, 2)
+
+    assert_error g.set_edge(0, 5, 3)
+    assert_error g.set_edge(-1, 0, 1)
+
+    assert_error g.get_adjacent(10)
+    
+test 'one edge':
+    let g = WUGraph(2)
+    g.set_edge(0,1, 67)
+    assert g.get_edge(0,1) == 67
+    assert g.get_edge(1,0) == 67
+    
+    assert g.n_edges() == 1
+    
+    assert normalize_vertices(g.get_adjacent(0)) == cons(1, None)
+    assert normalize_vertices(g.get_adjacent(1)) == cons(0, None)
+    
+test 'update edge':
+    let g = WUGraph(2)
+    g.set_edge(0,1, 67)
+    g.set_edge(1,0, 76)
+    
+    assert g.get_edge(0,1) == 76
+    assert g.get_edge(1,0) == 76
+    
+    assert g.n_edges() == 1    
+ 
+test 'delete edge':
+    let g = WUGraph(2)
+    
+    g.set_edge(0, 1, None)
+    assert g.n_edges() == 0
+    
+    assert g.get_all_edges() == None
+    
+    g.set_edge(0,1, 3)
+    g.set_edge(1, 0, None)
+    
+    assert g.n_edges() == 0
+    assert g.get_edge(0, 1) == None
+    assert g.get_edge(1, 0) == None
+    
+    
+test 'two edges from same node':
+    let g = WUGraph(4)
+    g.set_edge(0, 1, 10)
+    g.set_edge(0, 2, 11)
+    
+    assert g.n_edges() == 2
+    assert normalize_vertices(g.get_adjacent(0)) == cons(1, cons(2, None))
+    
+    
+    g.set_edge(0, 2, None)
+    assert g.n_edges() == 1
+    
+    assert g.get_edge(1, 0) == 10
+    assert g.get_edge(0, 2) == None
+    assert normalize_vertices(g.get_adjacent(0)) == cons(1, None)
+    
+test 'self- edge':
+    let g = WUGraph(4)
+    g.set_edge(1, 1, 10)
+    
+    
+    assert g.n_edges() == 1
+    assert g.get_edge(1, 1) == 10
+    assert normalize_edges(g.get_all_edges()) == cons(WEdge(1, 1, 10), None)
+    
 ###
 ### BUILDING GRAPHS
 ###
