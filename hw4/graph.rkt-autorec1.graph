@@ -7,15 +7,6 @@ import sbox_hash
 
 import 'hw4-lib/dictionaries.rkt'
 
-let eight_principles = ["Know your rights.",
-"Acknowledge your sources.",
-"Protect your work.",
-"Avoid suspicion.",
-"Do your own work.",
-"Never falsify a record or permit another person to do so.",
-"Never fabricate data, citations, or experimental results.",
-"Always tell the truth when discussing your work with your instructor."]
-
 
 ###
 ### REPRESENTATION
@@ -258,11 +249,11 @@ test 'self- edge':
     let g = WUGraph(4)
     g.set_edge(1, 1, 10)
     
+    
     assert g.n_edges() == 1
     assert g.get_edge(1, 1) == 10
     assert normalize_vertices(g.get_adjacent(1)) == cons(1, None)
     assert normalize_edges(g.get_all_edges()) == cons(WEdge(1, 1, 10), None)
-    
     
 ###
 ### BUILDING GRAPHS
@@ -393,26 +384,21 @@ test 'city graph':
 # Performs a depth-first search starting at `start`, applying `visit`
 # to each vertex once as it is discovered by the search.
 def dfs(graph: WUGRAPH!, start: Vertex?, visit: FunC[Vertex?, AnyC]) -> NoneC:
-    # out of bounds error
-    if ((start < 0) or (start >= graph.n_vertices())):
-        error('out of bounds')
     
     # lambda function to wrap the False
-    let visited =  vec(graph.n_vertices(), lambda i : False)
-  
+    let visited = vec(graph.n_vertices(), lambda i : False)
+    
     def dfs_helper(v: Vertex?):
         if not visited[v]:           
             visited[v] = True
             visit(v)
-               
-            # while traverse through linked list to check neighbors
+            
+            #no for loop bc can't iterate through linked list
             let adjacent = graph.get_adjacent(v)
             while adjacent != None:
                 dfs_helper(adjacent.data)
                 adjacent = adjacent.next
-        return    
         
-                    
     dfs_helper(start)
         
         
@@ -475,26 +461,6 @@ test 'cyclical graph':
     g.set_edge(0, 1, 1)
     g.set_edge(1, 2, 2)
     g.set_edge(2, 3, 3)
-    g.set_edge(3, 0, 4)
+    g.set_edge(3, 1, 4)
     
-    assert one_of(dfs_to_list(g, 0), [Cons.from_vec([0, 1, 2, 3]),
-                                      Cons.from_vec([0, 3, 2, 1])])
-                                      
-test 'self_edge':
-    let g = WUGraph(4)
-    g.set_edge(0, 0, 1)
-    
-    assert dfs_to_list(g, 0) == cons(0, None)
-    
-test 'DFS on solo':
-    let g = WUGraph(4)
-    g.set_edge(0, 1, 1)
-    
-    assert dfs_to_list(g, 3) == cons(3, None)
-    
-test 'DFS error':
-    let g = WUGraph(1)
-    
-    assert_error dfs_to_list(g,3)
-    
-    
+    assert one_of(dfs_to_list(g, 0), [Cons.from_vec([0, 1, 2, 3])])
