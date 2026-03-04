@@ -129,10 +129,9 @@ class TripPlanner (TRIP_PLANNER):
         def _add_pos(lat, long):
             let pos_key = _pos_to_key(lat, long)
             if not self.pos_to_vertex.mem?(pos_key):
-                let vertex_key = str(next_vertex)
                 self.pos_to_vertex.put(pos_key, next_vertex)
-                self.vertex_to_pos.put(vertex_key, [lat, long])
-                self.vertex_to_poi.put(vertex_key, None)
+                self.vertex_to_pos.put(next_vertex, [lat, long])
+                self.vertex_to_poi.put(next_vertex, None)
                 next_vertex = next_vertex + 1
         
         # add road endpoints as positions
@@ -152,26 +151,113 @@ class TripPlanner (TRIP_PLANNER):
             let category = p[2]
             let name = p[3]
             let vertex = self.pos_to_vertex.get(_pos_to_key(p[0], p[1]))
-            let vertex_key = str(vertex)
             
             #separate chaining HashTable for multiple pois in one pos
-            self.vertex_to_poi.put(vertex_key, cons(p, self.vertex_to_poi.get(vertex_key)))
+            self.vertex_to_poi.put(vertex, cons(p, self.vertex_to_poi.get(vertex)))
             
             # add to association lists
             # dynamically add categories 
             if not self.category_to_poi.mem?(category):
                 self.category_to_poi.put(category, None)
             self.category_to_poi.put(category, cons(p, self.category_to_poi.get(category)))
-            self.name_to_vertex.put(name, vertex_key)
+            self.name_to_vertex.put(name, vertex)
+    
+            
             
     def locate_all(self, dst_cat: Cat?) -> ListC[RawPos?]:
-        # check destination
-        pass
+        # check desired category exists
+        if not self.category_to_poi.mem?(dst_cat):
+            return None
+        let result = None
+        
+        # helper to check if pos alr in linked list of pos
+        def _in_list(pos: RawPos?, list: ListC[RawPos?]):
+             let curr = list
+             while curr != None:
+                 if(curr.data[0] == pos[0] and curr.data[1] == pos[1]):
+                     return True
+                 curr = curr.next
+             return False
+        
+        let cat2poi = self.category_to_poi.get(dst_cat)
+        while cat2poi != None:
+            let p = cat2poi.data 
+            let pos = [p[0], p[1]]
+            
+            # add to result if not duplicate
+            if not _in_list(pos, result):
+                result = cons(pos, result)
+       
+            cat2poi = cat2poi.next
+        
+        return result
         
         
     def plan_route(self, src_lat: Lat?, src_lon:  Lon?, dst_name: Name?) -> ListC[RawPos?]:
-        # Djikstra's 
-         pass
+        # check source and destination exists
+        if not self.name_to_vertex.mem?(dst_name):
+            return None
+        if not self.pos_to_vertex.mem?(_pos_to_key(src_lat, src_lon)):
+            return None
+        
+            
+        #    
+        # implement Djikstra's following in-class pseudocode
+        #
+        
+        let src_vertex = self.pos_to_vertex.get(_pos_to_key(src_lat, src_lon))
+        let dst_vertex = self.name_to_vertex.get(dst_name)
+        
+        # same location
+        if src_vertex == dst_vertex:
+            return cons(self.vertex_to_pos.get(src_vertex), None)
+        
+        let n = self.map.n_vertices()
+        let dist = [inf for i in range(n)]
+        let pred = vec(n)
+        
+        dist[src_vertex] = 0
+        
+        let todo = BinHeap(n, lambda a, b,: a[0] < b[0])
+        let done = [False for i in range(n)]
+        
+        # [dist, vertex]
+        todo.insert([0, src_vertex])
+        
+        while todo.len() > 0:
+            let v = todo.find_min()[1]
+            todo.remove_min()
+            
+            # mark done
+            if not done[v]:
+                done[v] = True
+                
+                # relax outgoing edges
+                let neighbors = self.map.get_adjacent(v)
+                let curr = neighbors
+                while curr != None:
+                    let u = curr.data
+                    let w = self.map.get_edge(v, u)
+                    
+                    if (dist[v] + w) < dist[u]:
+                        dist[u] = dist[v] + w
+                        pred[u] = v
+                        todo.insert([dist[u], u])
+                    curr = curr.next
+        
+        # started at destination     
+        if pred[dst_vertex] == None:
+            return None
+        
+        # recover path
+        let path = None
+        let curr = dst_vertex
+        while curr != None:
+            path = cons(self.vertex_to_pos.get(curr), path)
+            curr = pred[curr]
+            
+        return path
+        
          
     def find_nearby(self, src_lat: Lat?, src_lon:  Lon?, dst_cat:  Cat?, n: nat?) -> ListC[RawPOI?]: 
         pass   
@@ -194,3 +280,68 @@ test 'My first plan_route test':
 test 'My first find_nearby test':
     assert my_first_example().find_nearby(0, 0, "food", 1) == \
         cons([0,1, "food", "Kansaku"], None)
+        
+# locate_all
+        
+def food():
+    return TripPlanner([[0, 0, 0, 1], [0, 0, 1, 0], [1, 0, 1, 1]],
+                        [[0, 1, "food", "Kansaku"], [1, 0, "food", "Shangs"], [1, 1, "food", "Koco Table"]])
+
+test 'return multiple locateall':
+    let result = food().locate_all("food")
+    assert result == cons([0,1], cons([1, 0], cons([1, 1], None)))
+    
+test 'nonexistent category':
+    assert food().locate_all("hello") == None
+
+test 'empty map':
+    let planner = TripPlanner([], [])
+    assert planner.locate_all("hello") == None
+
+test 'dupe':
+    let planner = TripPlanner([[0, 0, 0, 1], [0, 0, 1, 0], [1, 0, 1, 1]],
+                        [[0, 1, "food", "Kansaku"], [0, 1, "food", "Kansaku"]])
+    assert planner.locate_all("food") == cons([0,1], None)
+    
+
+# plan_route
+
+test 'plan route functional':
+    assert food().plan_route(0, 0, "Kansaku") == cons([0,0], cons([0, 1], None))
+    
+def island():
+    return TripPlanner([[0, 0, 0, 1], [0, 0, 1, 0], [1, 0, 1, 1], [1, 2, 1, 3]],
+                        [[0, 1, "food", "Kansaku"], [1, 0, "food", "Shangs"], [1, 2, "island", "Haiti"]])
+                    
+test 'unreachable':
+    assert island().plan_route(0,0, "Haiti") == None
+    
+test 'nonexistent destination':
+    assert island().plan_route(0,1, "Dagobah") == None
+
+test 'empty':
+    let planner = TripPlanner([], [])
+    assert planner.plan_route(0, 0, "test") == None
+    
+test 'same location':
+    assert island().plan_route(1, 2, "Haiti") == cons([1, 2], None)
+    
+def island_hopper():
+    return TripPlanner([[0, 0, 0, 1], [0, 0, 1, 0], [1, 0, 1, 1], [1, 1, 1, 3], [1, 2, 1, 3]],
+                        [[0, 1, "food", "Kansaku"], [1, 0, "food", "Shangs"], [1, 2, "island", "Haiti"]])
+                        
+test 'long path':
+    assert island_hopper().plan_route(0, 0, "Haiti") == cons([0,0], cons([1,0], cons([1,1], cons([1,3], cons([1,2], None)))))
+    
+def island_plane():
+    return TripPlanner([[0, 0, 0, 1], [0, 0, 1, 0], [1, 0, 1, 1], [1, 1, 1, 3], [1, 2, 1, 3], [0, 1, 1, 2]],
+                        [[0, 1, "food", "Kansaku"], [1, 0, "food", "Shangs"], [1, 2, "island", "Haiti"]])
+                        
+test 'shortest path':
+    assert island_plane().plan_route(0, 0, "Haiti") == cons([0,0], cons([0,1], cons([1,2], None)))
+    
+
+# find_nearby
+    
+
+    
